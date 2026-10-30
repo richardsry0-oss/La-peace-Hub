@@ -2,521 +2,834 @@
 --[[
     LA PEACE HUB
     By Kai
-    Version: 0.1.0
-    Phase 1: Main Interface
+    Version 0.2.0
+    Complete UI redesign
 ]]
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- CONFIGURATION
+-- CONFIG
 
-local Config = {
+local C = {
     Name = "LA PEACE HUB",
-    Version = "0.1.0",
-
+    Version = "0.2.0",
     Icon = "rbxassetid://108294449126537",
-    Background = "rbxassetid://17582945598",
+    Wallpaper = "rbxassetid://17582945598",
 
-    BackgroundColor = Color3.fromRGB(17, 19, 25),
-    PanelColor = Color3.fromRGB(25, 28, 36),
-    Accent = Color3.fromRGB(65, 135, 220),
-    TextColor = Color3.fromRGB(240, 242, 248),
-    Muted = Color3.fromRGB(155, 163, 177)
+    Background = Color3.fromRGB(12, 16, 25),
+    Panel = Color3.fromRGB(20, 27, 40),
+    Panel2 = Color3.fromRGB(28, 38, 55),
+    Blue = Color3.fromRGB(54, 139, 240),
+    Cyan = Color3.fromRGB(75, 190, 255),
+    White = Color3.fromRGB(245, 248, 255),
+    Gray = Color3.fromRGB(155, 170, 190),
+    Red = Color3.fromRGB(225, 75, 85),
+    Green = Color3.fromRGB(75, 200, 135)
 }
 
 -- CLEANUP
 
-local Old = PlayerGui:FindFirstChild("LaPeaceHub")
+local old = PlayerGui:FindFirstChild("LaPeaceHub")
 
-if Old then
-    Old:Destroy()
+if old then
+    old:Destroy()
 end
 
--- GUI ROOT
+-- HELPERS
 
-local Screen = Instance.new("ScreenGui")
-Screen.Name = "LaPeaceHub"
-Screen.ResetOnSpawn = false
-Screen.IgnoreGuiInset = true
-Screen.DisplayOrder = 999
-Screen.Parent = PlayerGui
-
-local function Create(class, properties, parent)
+local function New(class, props, parent)
     local obj = Instance.new(class)
 
-    for property, value in pairs(properties) do
-        obj[property] = value
+    for k, v in pairs(props or {}) do
+        obj[k] = v
     end
 
     obj.Parent = parent
     return obj
 end
 
-local function Corner(parent, radius)
-    Create("UICorner", {
+local function Round(obj, radius)
+    New("UICorner", {
         CornerRadius = UDim.new(0, radius)
-    }, parent)
+    }, obj)
 end
 
-local function Stroke(parent, color, transparency)
-    Create("UIStroke", {
-        Color = color,
-        Transparency = transparency or 0,
+local function Outline(obj, color, transparency)
+    New("UIStroke", {
+        Color = color or C.Blue,
+        Transparency = transparency or 0.6,
         Thickness = 1
-    }, parent)
+    }, obj)
 end
 
-local function Label(parent, text, size, position, fontSize)
-    return Create("TextLabel", {
+local function Gradient(obj, first, second, rotation)
+    New("UIGradient", {
+        Color = ColorSequence.new(first, second),
+        Rotation = rotation or 0
+    }, obj)
+end
+
+local function Text(parent, value, size, position, fontSize, color)
+    return New("TextLabel", {
         BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = Config.TextColor,
-        TextSize = fontSize or 14,
+        Text = value,
+        TextSize = fontSize or 13,
         Font = Enum.Font.Gotham,
+        TextColor3 = color or C.White,
         Size = size,
         Position = position,
         TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center
+        TextYAlignment = Enum.TextYAlignment.Center,
+        TextWrapped = true
     }, parent)
 end
 
-local function Button(parent, text, size, position)
-    local button = Create("TextButton", {
-        BackgroundColor3 = Config.PanelColor,
-        Text = text,
-        TextColor3 = Config.TextColor,
-        TextSize = 13,
-        Font = Enum.Font.GothamMedium,
+local function NewButton(parent, value, size, position, color)
+    local b = New("TextButton", {
+        BackgroundColor3 = color or C.Panel2,
+        Text = value,
+        TextSize = 12,
+        Font = Enum.Font.GothamSemibold,
+        TextColor3 = C.White,
         Size = size,
         Position = position,
-        AutoButtonColor = true
+        AutoButtonColor = true,
+        BorderSizePixel = 0
     }, parent)
 
-    Corner(button, 7)
-    return button
+    Round(b, 8)
+    return b
 end
+
+local function Tween(obj, duration, properties)
+    local t = TweenService:Create(
+        obj,
+        TweenInfo.new(duration, Enum.EasingStyle.Quint,
+            Enum.EasingDirection.Out),
+        properties
+    )
+    t:Play()
+    return t
+end
+
+-- ROOT
+
+local GUI = New("ScreenGui", {
+    Name = "LaPeaceHub",
+    ResetOnSpawn = false,
+    IgnoreGuiInset = true,
+    DisplayOrder = 999
+}, PlayerGui)
 
 -- LOADING SCREEN
 
-local Loading = Create("Frame", {
+local Loading = New("Frame", {
     Size = UDim2.fromScale(1, 1),
-    BackgroundColor3 = Config.BackgroundColor,
-    ZIndex = 20
-}, Screen)
+    BackgroundColor3 = C.Background,
+    BorderSizePixel = 0,
+    ZIndex = 100
+}, GUI)
 
-local LoadingIcon = Create("ImageLabel", {
+local LoadIcon = New("ImageLabel", {
     BackgroundTransparency = 1,
-    Image = Config.Icon,
-    Size = UDim2.fromOffset(95, 95),
-    Position = UDim2.new(0.5, -47, 0.5, -85),
-    ZIndex = 21
+    Image = C.Icon,
+    Size = UDim2.fromOffset(100, 100),
+    Position = UDim2.new(0.5, -50, 0.5, -105),
+    ImageTransparency = 1,
+    ZIndex = 101
 }, Loading)
 
-local LoadingTitle = Create("TextLabel", {
-    BackgroundTransparency = 1,
-    Text = "LA PEACE HUB",
-    TextColor3 = Config.TextColor,
-    Font = Enum.Font.GothamBold,
-    TextSize = 23,
-    Size = UDim2.new(1, 0, 0, 35),
-    Position = UDim2.new(0, 0, 0.5, 20),
-    ZIndex = 21
+local LoadTitle = Text(
+    Loading, "LA PEACE HUB",
+    UDim2.new(1, 0, 0, 40),
+    UDim2.new(0, 0, 0.5, 5), 24
+)
+LoadTitle.TextXAlignment = Enum.TextXAlignment.Center
+LoadTitle.Font = Enum.Font.GothamBold
+LoadTitle.ZIndex = 101
+
+local LoadStatus = Text(
+    Loading, "Initializing interface...",
+    UDim2.new(1, 0, 0, 25),
+    UDim2.new(0, 0, 0.5, 42), 11, C.Gray
+)
+LoadStatus.TextXAlignment = Enum.TextXAlignment.Center
+LoadStatus.ZIndex = 101
+
+local BarBG = New("Frame", {
+    Size = UDim2.fromOffset(210, 5),
+    Position = UDim2.new(0.5, -105, 0.5, 85),
+    BackgroundColor3 = C.Panel2,
+    BorderSizePixel = 0,
+    ZIndex = 101
 }, Loading)
+Round(BarBG, 5)
 
-local LoadingText = Create("TextLabel", {
-    BackgroundTransparency = 1,
-    Text = "Initializing...",
-    TextColor3 = Config.Muted,
-    Font = Enum.Font.Gotham,
-    TextSize = 12,
-    Size = UDim2.new(1, 0, 0, 25),
-    Position = UDim2.new(0, 0, 0.5, 55),
-    ZIndex = 21
-}, Loading)
+local Bar = New("Frame", {
+    Size = UDim2.fromScale(0, 1),
+    BackgroundColor3 = C.Cyan,
+    BorderSizePixel = 0,
+    ZIndex = 102
+}, BarBG)
+Round(Bar, 5)
+Gradient(Bar, C.Blue, C.Cyan)
 
-local ProgressBG = Create("Frame", {
-    BackgroundColor3 = Config.PanelColor,
-    Size = UDim2.fromOffset(190, 5),
-    Position = UDim2.new(0.5, -95, 0.5, 90)
-}, Loading)
+Tween(LoadIcon, 0.8, {ImageTransparency = 0})
 
-Corner(ProgressBG, 5)
+task.spawn(function()
+    for i = 1, 4 do
+        LoadStatus.Text = ({
+            "Initializing interface...",
+            "Loading LA PEACE assets...",
+            "Preparing workspace...",
+            "Almost ready..."
+        })[i]
 
-local Progress = Create("Frame", {
-    BackgroundColor3 = Config.Accent,
-    Size = UDim2.fromScale(0, 1)
-}, ProgressBG)
+        Tween(Bar, 0.4, {
+            Size = UDim2.fromScale(i / 4, 1)
+        })
 
-Corner(Progress, 5)
+        task.wait(0.4)
+    end
 
-TweenService:Create(
-    Progress,
-    TweenInfo.new(1.5),
-    {Size = UDim2.fromScale(1, 1)}
-):Play()
+    task.wait(0.3)
+
+    Tween(Loading, 0.5, {
+        BackgroundTransparency = 1
+    })
+
+    task.wait(0.55)
+    Loading:Destroy()
+end)
 
 -- MAIN WINDOW
 
-local Window = Create("Frame", {
+local Window = New("Frame", {
     Name = "MainWindow",
-    Size = UDim2.fromOffset(620, 410),
-    Position = UDim2.new(0.5, -310, 0.5, -205),
-    BackgroundColor3 = Config.BackgroundColor,
+    Size = UDim2.new(0.94, 0, 0.78, 0),
+    Position = UDim2.fromScale(0.5, 0.5),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = C.Background,
     BorderSizePixel = 0,
-    Visible = false,
     ClipsDescendants = true
-}, Screen)
+}, GUI)
 
-Corner(Window, 12)
-Stroke(Window, Color3.fromRGB(65, 72, 90), 0.25)
+New("UISizeConstraint", {
+    MinSize = Vector2.new(320, 380),
+    MaxSize = Vector2.new(900, 700)
+}, Window)
 
--- BACKGROUND IMAGE
+Round(Window, 14)
+Outline(Window, C.Blue, 0.35)
 
-local Wallpaper = Create("ImageLabel", {
-    Name = "Wallpaper",
-    BackgroundTransparency = 1,
-    Image = Config.Background,
-    ImageTransparency = 0.84,
-    ScaleType = Enum.ScaleType.Crop,
+-- WALLPAPER
+
+local Wallpaper = New("ImageLabel", {
+    Name = "XPWallpaper",
     Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Image = C.Wallpaper,
+    ScaleType = Enum.ScaleType.Crop,
+    ImageTransparency = 0.28,
     ZIndex = 0
+}, Window)
+
+local WallpaperOverlay = New("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundColor3 = C.Background,
+    BackgroundTransparency = 0.17,
+    BorderSizePixel = 0,
+    ZIndex = 1
 }, Window)
 
 -- HEADER
 
-local Header = Create("Frame", {
-    Size = UDim2.new(1, 0, 0, 43),
-    BackgroundColor3 = Color3.fromRGB(29, 37, 52),
+local Header = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 49),
+    BackgroundColor3 = Color3.fromRGB(18, 30, 49),
     BackgroundTransparency = 0.05,
     BorderSizePixel = 0,
-    ZIndex = 2
+    ZIndex = 5
 }, Window)
 
-local HeaderIcon = Create("ImageLabel", {
+Gradient(Header, Color3.fromRGB(30, 65, 105),
+    Color3.fromRGB(15, 25, 43))
+
+local Logo = New("ImageLabel", {
     BackgroundTransparency = 1,
-    Image = Config.Icon,
-    Size = UDim2.fromOffset(27, 27),
+    Image = C.Icon,
+    Size = UDim2.fromOffset(33, 33),
     Position = UDim2.fromOffset(10, 8),
-    ZIndex = 3
+    ZIndex = 7
 }, Header)
 
-Label(
-    Header,
-    "LA PEACE HUB",
-    UDim2.new(0, 180, 1, 0),
-    UDim2.fromOffset(45, 0),
-    14
-).ZIndex = 3
-
-local Minimize = Button(
-    Header, "—",
-    UDim2.fromOffset(32, 27),
-    UDim2.new(1, -75, 0, 8)
+local HeaderTitle = Text(
+    Header, "LA PEACE HUB",
+    UDim2.new(0.5, -40, 1, 0),
+    UDim2.fromOffset(51, 0), 14
 )
+HeaderTitle.Font = Enum.Font.GothamBold
+HeaderTitle.ZIndex = 7
 
-Minimize.ZIndex = 4
-
-local Close = Button(
-    Header, "X",
-    UDim2.fromOffset(32, 27),
-    UDim2.new(1, -38, 0, 8)
+local HeaderVersion = Text(
+    Header, "v0.2.0",
+    UDim2.fromOffset(55, 25),
+    UDim2.new(0.5, 4, 0, 12), 10, C.Gray
 )
+HeaderVersion.ZIndex = 7
 
-Close.BackgroundColor3 = Color3.fromRGB(150, 55, 60)
-Close.ZIndex = 4
+local MinButton = NewButton(
+    Header, "—", UDim2.fromOffset(32, 29),
+    UDim2.new(1, -76, 0, 10)
+)
+MinButton.ZIndex = 8
+
+local CloseButton = NewButton(
+    Header, "×", UDim2.fromOffset(32, 29),
+    UDim2.new(1, -39, 0, 10), C.Red
+)
+CloseButton.ZIndex = 8
 
 -- SIDEBAR
 
-local Sidebar = Create("Frame", {
-    Size = UDim2.new(0, 145, 1, -43),
-    Position = UDim2.fromOffset(0, 43),
-    BackgroundColor3 = Color3.fromRGB(20, 23, 30),
+local Sidebar = New("Frame", {
+    Size = UDim2.new(0, 116, 1, -49),
+    Position = UDim2.fromOffset(0, 49),
+    BackgroundColor3 = Color3.fromRGB(13, 19, 30),
     BackgroundTransparency = 0.08,
     BorderSizePixel = 0,
-    ZIndex = 2
+    ZIndex = 4
 }, Window)
 
-local SidebarTitle = Label(
-    Sidebar,
-    "NAVIGATION",
-    UDim2.new(1, -20, 0, 30),
-    UDim2.fromOffset(12, 10),
-    10
+local NavTitle = Text(
+    Sidebar, "MENU",
+    UDim2.new(1, -20, 0, 25),
+    UDim2.fromOffset(10, 13), 10, C.Gray
 )
-
-SidebarTitle.TextColor3 = Config.Muted
 
 -- CONTENT
 
-local Content = Create("Frame", {
-    Size = UDim2.new(1, -155, 1, -53),
-    Position = UDim2.fromOffset(150, 48),
+local Content = New("Frame", {
+    Size = UDim2.new(1, -126, 1, -60),
+    Position = UDim2.fromOffset(121, 54),
     BackgroundTransparency = 1,
-    ZIndex = 2
+    ZIndex = 3
 }, Window)
 
 local Pages = {}
 
-local function NewPage(name)
-    local page = Create("Frame", {
+local function MakePage(name)
+    local p = New("ScrollingFrame", {
         Name = name,
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = C.Blue,
+        CanvasSize = UDim2.fromOffset(0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Visible = false
     }, Content)
 
-    Pages[name] = page
-    return page
+    New("UIPadding", {
+        PaddingLeft = UDim.new(0, 5),
+        PaddingRight = UDim.new(0, 9),
+        PaddingTop = UDim.new(0, 7),
+        PaddingBottom = UDim.new(0, 15)
+    }, p)
+
+    New("UIListLayout", {
+        Padding = UDim.new(0, 11),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    }, p)
+
+    Pages[name] = p
+    return p
 end
 
-local Home = NewPage("Home")
-local Hub = NewPage("ScriptHub")
-local Assets = NewPage("Assets")
-local Settings = NewPage("Settings")
+local Home = MakePage("Home")
+local ScriptHub = MakePage("ScriptHub")
+local AssetManager = MakePage("AssetManager")
+local SavedFiles = MakePage("SavedFiles")
+local Settings = MakePage("Settings")
 
-local function ShowPage(name)
-    for pageName, page in pairs(Pages) do
-        page.Visible = pageName == name
-    end
+local function PageTitle(page, title, subtitle)
+    local holder = New("Frame", {
+        Size = UDim2.new(1, 0, 0, 62),
+        BackgroundTransparency = 1
+    }, page)
+
+    Text(holder, title,
+        UDim2.new(1, 0, 0, 34),
+        UDim2.fromOffset(0, 0), 21).Font =
+        Enum.Font.GothamBold
+
+    Text(holder, subtitle,
+        UDim2.new(1, 0, 0, 24),
+        UDim2.fromOffset(0, 33), 11, C.Gray)
 end
 
--- HOME PAGE
+local function Card(parent, height)
+    local card = New("Frame", {
+        Size = UDim2.new(1, 0, 0, height),
+        BackgroundColor3 = C.Panel,
+        BackgroundTransparency = 0.08,
+        BorderSizePixel = 0
+    }, parent)
 
-Label(
-    Home,
-    "Welcome to LA PEACE",
-    UDim2.new(1, -20, 0, 35),
-    UDim2.fromOffset(10, 12),
-    22
+    Round(card, 10)
+    Outline(card, C.Blue, 0.76)
+
+    return card
+end
+
+-- HOME
+
+PageTitle(Home, "Welcome to LA PEACE",
+    "Your personal script and asset management hub.")
+
+local Welcome = Card(Home, 125)
+
+local WelcomeIcon = New("ImageLabel", {
+    BackgroundTransparency = 1,
+    Image = C.Icon,
+    Size = UDim2.fromOffset(75, 75),
+    Position = UDim2.fromOffset(12, 25)
+}, Welcome)
+
+Text(Welcome, "LA PEACE HUB",
+    UDim2.new(1, -105, 0, 30),
+    UDim2.fromOffset(98, 27), 17).Font =
+    Enum.Font.GothamBold
+
+Text(Welcome, "Created by Kai",
+    UDim2.new(1, -105, 0, 25),
+    UDim2.fromOffset(98, 56), 11, C.Gray)
+
+Text(Welcome, "Version 0.2.0",
+    UDim2.new(1, -105, 0, 22),
+    UDim2.fromOffset(98, 80), 10, C.Cyan)
+
+local Status = Card(Home, 75)
+
+Text(Status, "SYSTEM STATUS",
+    UDim2.new(1, -20, 0, 25),
+    UDim2.fromOffset(12, 8), 10, C.Gray)
+
+local StatusText = Text(Status, "●  Interface initialized",
+    UDim2.new(1, -20, 0, 27),
+    UDim2.fromOffset(12, 34), 12, C.Green)
+
+local Quick = Card(Home, 88)
+
+Text(Quick, "QUICK ACCESS",
+    UDim2.new(1, -20, 0, 25),
+    UDim2.fromOffset(12, 6), 10, C.Gray)
+
+local QuickScripts = NewButton(
+    Quick, "Script Hub",
+    UDim2.new(0.46, 0, 0, 35),
+    UDim2.new(0.03, 0, 0, 42), C.Panel2
 )
 
-Label(
-    Home,
-    "Universal Script & Asset Manager",
-    UDim2.new(1, -20, 0, 25),
-    UDim2.fromOffset(10, 48),
-    12
-).TextColor3 = Config.Muted
-
-local Info = Create("Frame", {
-    Size = UDim2.new(1, -20, 0, 110),
-    Position = UDim2.fromOffset(10, 95),
-    BackgroundColor3 = Config.PanelColor,
-    BackgroundTransparency = 0.12
-}, Home)
-
-Corner(Info, 10)
-
-Label(
-    Info,
-    "LA PEACE HUB",
-    UDim2.new(1, -20, 0, 30),
-    UDim2.fromOffset(12, 10),
-    17
+local QuickAssets = NewButton(
+    Quick, "Assets",
+    UDim2.new(0.46, 0, 0, 35),
+    UDim2.new(0.51, 0, 0, 42), C.Blue
 )
 
-Label(
-    Info,
-    "Created by Kai",
-    UDim2.new(1, -20, 0, 25),
-    UDim2.fromOffset(12, 40),
-    12
-).TextColor3 = Config.Muted
+-- SCRIPT HUB
 
-Label(
-    Info,
-    "Version 0.1.0 | Initial Release",
-    UDim2.new(1, -20, 0, 22),
-    UDim2.fromOffset(12, 68),
-    11
-).TextColor3 = Config.Muted
+PageTitle(ScriptHub, "Script Hub",
+    "Browse your own authorized script collection.")
 
--- SCRIPT HUB PAGE
-
-Label(
-    Hub,
-    "Script Library",
-    UDim2.new(1, -20, 0, 35),
-    UDim2.fromOffset(10, 10),
-    21
-)
-
-Label(
-    Hub,
-    "Your authorized script collection",
-    UDim2.new(1, -20, 0, 25),
-    UDim2.fromOffset(10, 45),
-    12
-).TextColor3 = Config.Muted
-
-local HubMessage = Create("TextLabel", {
-    BackgroundColor3 = Config.PanelColor,
-    Text = "Your script library is currently empty.",
-    TextColor3 = Config.Muted,
-    TextSize = 13,
+local SearchBox = New("TextBox", {
+    Size = UDim2.new(1, 0, 0, 39),
+    BackgroundColor3 = C.Panel,
+    Text = "",
+    PlaceholderText = "Search scripts...",
+    PlaceholderColor3 = C.Gray,
+    TextColor3 = C.White,
     Font = Enum.Font.Gotham,
-    Size = UDim2.new(1, -20, 0, 100),
-    Position = UDim2.fromOffset(10, 85),
-    TextWrapped = true
-}, Hub)
-
-Corner(HubMessage, 9)
-
--- ASSET MANAGER PAGE
-
-Label(
-    Assets,
-    "Asset Manager",
-    UDim2.new(1, -20, 0, 35),
-    UDim2.fromOffset(10, 10),
-    21
-)
-
-Label(
-    Assets,
-    "Manage authorized project backups",
-    UDim2.new(1, -20, 0, 25),
-    UDim2.fromOffset(10, 45),
-    12
-).TextColor3 = Config.Muted
-
-local ScanButton = Button(
-    Assets,
-    "Scan Workspace",
-    UDim2.fromOffset(145, 34),
-    UDim2.fromOffset(10, 85)
-)
-
-local ScanResult = Create("TextLabel", {
-    BackgroundColor3 = Config.PanelColor,
-    Text = "Ready to scan accessible Workspace instances.",
-    TextColor3 = Config.Muted,
     TextSize = 12,
-    Font = Enum.Font.Gotham,
-    Size = UDim2.new(1, -20, 0, 85),
-    Position = UDim2.fromOffset(10, 130),
-    TextWrapped = true
-}, Assets)
+    ClearTextOnFocus = false
+}, ScriptHub)
+Round(SearchBox, 8)
+Outline(SearchBox, C.Blue, 0.75)
 
-Corner(ScanResult, 8)
+local EmptyScripts = Card(ScriptHub, 100)
 
-local function ScanWorkspace()
+local EmptyText = Text(
+    EmptyScripts,
+    "Your script library is empty.\nAdd scripts for projects you own.",
+    UDim2.new(1, -20, 1, -20),
+    UDim2.fromOffset(10, 10), 12, C.Gray
+)
+EmptyText.TextXAlignment = Enum.TextXAlignment.Center
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if SearchBox.Text == "" then
+        EmptyText.Text =
+            "Your script library is empty.\nAdd scripts for projects you own."
+    else
+        EmptyText.Text =
+            "No matching scripts found.\nYour library is currently empty."
+    end
+end)
+
+-- ASSET MANAGER
+
+PageTitle(AssetManager, "Asset Manager",
+    "Inspect accessible instances in your own experience.")
+
+local ScanCard = Card(AssetManager, 155)
+
+Text(ScanCard, "WORKSPACE SCANNER",
+    UDim2.new(1, -20, 0, 28),
+    UDim2.fromOffset(12, 8), 12).Font =
+    Enum.Font.GothamBold
+
+Text(ScanCard, "Inspect accessible Workspace objects.",
+    UDim2.new(1, -20, 0, 25),
+    UDim2.fromOffset(12, 35), 10, C.Gray)
+
+local ScanButton = NewButton(
+    ScanCard, "Scan Workspace",
+    UDim2.new(1, -24, 0, 36),
+    UDim2.fromOffset(12, 68), C.Blue
+)
+
+local ScanOutput = Text(
+    ScanCard,
+    "Waiting for scan...",
+    UDim2.new(1, -24, 0, 35),
+    UDim2.fromOffset(12, 111), 10, C.Gray
+)
+
+local LatestReport = nil
+local Snapshots = {}
+
+ScanButton.MouseButton1Click:Connect(function()
+    ScanButton.Text = "Scanning..."
+    ScanButton.Active = false
+
+    task.wait(0.15)
+
+    local counts = {}
     local total = 0
-    local skipped = 0
+    local excluded = 0
 
     for _, object in ipairs(workspace:GetDescendants()) do
         if object:IsA("Animation")
             or object:IsA("AnimationController") then
-            skipped += 1
+            excluded += 1
         else
             total += 1
+            counts[object.ClassName] =
+                (counts[object.ClassName] or 0) + 1
         end
     end
 
-    ScanResult.Text =
-        "Workspace scan complete.\n" ..
-        "Accessible instances: " .. total .. "\n" ..
-        "Excluded animation objects: " .. skipped ..
-        "\nThis is a scan, not a saved backup."
-end
+    LatestReport = {
+        Name = "Workspace Scan",
+        Date = os.date("%Y-%m-%d %H:%M"),
+        Total = total,
+        Excluded = excluded,
+        Classes = counts
+    }
 
-ScanButton.MouseButton1Click:Connect(ScanWorkspace)
+    ScanOutput.Text =
+        "Instances: " .. total ..
+        " | Excluded: " .. excluded
 
--- SETTINGS PAGE
+    ScanButton.Text = "Scan Again"
+    ScanButton.Active = true
 
-Label(
-    Settings,
-    "Settings",
-    UDim2.new(1, -20, 0, 35),
-    UDim2.fromOffset(10, 10),
-    21
+    StatusText.Text = "●  Workspace scan completed"
+end)
+
+local SaveReport = NewButton(
+    AssetManager, "Save Scan Report",
+    UDim2.new(1, 0, 0, 39),
+    UDim2.fromOffset(0, 0), C.Blue
 )
 
-local WallpaperToggle = Button(
-    Settings,
-    "Toggle Wallpaper",
-    UDim2.fromOffset(155, 36),
-    UDim2.fromOffset(10, 65)
+SaveReport.MouseButton1Click:Connect(function()
+    if not LatestReport then
+        ScanOutput.Text = "Scan Workspace first."
+        return
+    end
+
+    local report = table.clone(LatestReport)
+    report.Name = "Backup_" .. tostring(#Snapshots + 1)
+
+    table.insert(Snapshots, report)
+
+    StatusText.Text = "●  Scan report saved in session"
+    ScanOutput.Text = "Report saved: " .. report.Name
+end)
+
+-- SAVED FILES
+
+PageTitle(SavedFiles, "Saved Files",
+    "Manage your current session's scan reports.")
+
+local FileList = New("Frame", {
+    Size = UDim2.new(1, 0, 0, 20),
+    AutomaticSize = Enum.AutomaticSize.Y,
+    BackgroundTransparency = 1
+}, SavedFiles)
+
+local FileLayout = New("UIListLayout", {
+    Padding = UDim.new(0, 8),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, FileList)
+
+local function RefreshFiles()
+    for _, child in ipairs(FileList:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+
+    if #Snapshots == 0 then
+        local empty = Card(FileList, 75)
+        Text(empty, "No saved reports yet.",
+            UDim2.new(1, -20, 1, 0),
+            UDim2.fromOffset(10, 0), 12, C.Gray)
+        return
+    end
+
+    for index, report in ipairs(Snapshots) do
+        local row = Card(FileList, 115)
+        row.LayoutOrder = index
+
+        Text(row, report.Name,
+            UDim2.new(1, -20, 0, 25),
+            UDim2.fromOffset(10, 6), 12).Font =
+            Enum.Font.GothamBold
+
+        Text(row, report.Date .. " | " .. report.Total .. " instances",
+            UDim2.new(1, -20, 0, 20),
+            UDim2.fromOffset(10, 29), 10, C.Gray)
+
+        local Load = NewButton(
+            row, "View", UDim2.new(0.29, 0, 0, 30),
+            UDim2.new(0.025, 0, 0, 72), C.Blue
+        )
+
+        local Rename = NewButton(
+            row, "Rename", UDim2.new(0.29, 0, 0, 30),
+            UDim2.new(0.355, 0, 0, 72)
+        )
+
+        local Delete = NewButton(
+            row, "Delete", UDim2.new(0.29, 0, 0, 30),
+            UDim2.new(0.685, 0, 0, 72), C.Red
+        )
+
+        Load.MouseButton1Click:Connect(function()
+            ScanOutput.Text =
+                "Loaded report: " .. report.Name ..
+                " (" .. report.Total .. " instances)"
+            StatusText.Text = "●  Report viewed"
+        end)
+
+        Rename.MouseButton1Click:Connect(function()
+            local dialog = New("Frame", {
+                Size = UDim2.new(0.8, 0, 0, 145),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundColor3 = C.Panel2,
+                ZIndex = 40
+            }, Window)
+
+            Round(dialog, 10)
+            Outline(dialog, C.Blue, 0.2)
+
+            local input = New("TextBox", {
+                Size = UDim2.new(1, -20, 0, 35),
+                Position = UDim2.fromOffset(10, 12),
+                BackgroundColor3 = C.Background,
+                Text = report.Name,
+                TextColor3 = C.White,
+                PlaceholderText = "New name",
+                Font = Enum.Font.Gotham,
+                TextSize = 12,
+                ClearTextOnFocus = false,
+                ZIndex = 41
+            }, dialog)
+
+            Round(input, 7)
+
+            local confirm = NewButton(
+                dialog, "Confirm",
+                UDim2.new(0.45, 0, 0, 32),
+                UDim2.new(0.025, 0, 0, 92), C.Blue
+            )
+            confirm.ZIndex = 42
+
+            local cancel = NewButton(
+                dialog, "Cancel",
+                UDim2.new(0.45, 0, 0, 32),
+                UDim2.new(0.525, 0, 0, 92), C.Red
+            )
+            cancel.ZIndex = 42
+
+            confirm.MouseButton1Click:Connect(function()
+                if input.Text:gsub("%s+", "") ~= "" then
+                    report.Name = input.Text
+                    RefreshFiles()
+                end
+                dialog:Destroy()
+            end)
+
+            cancel.MouseButton1Click:Connect(function()
+                dialog:Destroy()
+            end)
+        end)
+
+        Delete.MouseButton1Click:Connect(function()
+            table.remove(Snapshots, index)
+            RefreshFiles()
+            StatusText.Text = "●  Report deleted"
+        end)
+    end
+end
+
+RefreshFiles()
+
+-- SETTINGS
+
+PageTitle(Settings, "Settings",
+    "Customize your LA PEACE experience.")
+
+local WallpaperCard = Card(Settings, 75)
+
+Text(WallpaperCard, "Windows XP Wallpaper",
+    UDim2.new(1, -100, 0, 30),
+    UDim2.fromOffset(12, 10), 12)
+
+local WallpaperToggle = NewButton(
+    WallpaperCard, "ON",
+    UDim2.fromOffset(65, 30),
+    UDim2.new(1, -77, 0, 20), C.Green
 )
 
 WallpaperToggle.MouseButton1Click:Connect(function()
     Wallpaper.Visible = not Wallpaper.Visible
+    WallpaperOverlay.Visible = Wallpaper.Visible
+    WallpaperToggle.Text = Wallpaper.Visible and "ON" or "OFF"
+    WallpaperToggle.BackgroundColor3 =
+        Wallpaper.Visible and C.Green or C.Red
 end)
 
-local VersionLabel = Label(
-    Settings,
-    "LA PEACE HUB v0.1.0",
+local InfoCard = Card(Settings, 95)
+
+Text(InfoCard, "ABOUT LA PEACE HUB",
     UDim2.new(1, -20, 0, 25),
-    UDim2.fromOffset(10, 115),
-    12
-)
+    UDim2.fromOffset(12, 8), 11).Font =
+    Enum.Font.GothamBold
 
-VersionLabel.TextColor3 = Config.Muted
+Text(InfoCard, "Developer: Kai\nVersion: 0.2.0\nInterface: Mobile First",
+    UDim2.new(1, -20, 0, 60),
+    UDim2.fromOffset(12, 32), 10, C.Gray)
 
--- NAVIGATION BUTTONS
+-- NAVIGATION
 
 local Navigation = {
-    {"Home", "Home"},
-    {"Script Hub", "ScriptHub"},
-    {"Assets", "Assets"},
-    {"Settings", "Settings"}
+    {"⌂", "Home", Home},
+    {"▤", "Scripts", ScriptHub},
+    {"◈", "Assets", AssetManager},
+    {"▣", "Saved", SavedFiles},
+    {"⚙", "Settings", Settings}
 }
 
-for index, item in ipairs(Navigation) do
-    local button = Button(
-        Sidebar,
-        item[1],
-        UDim2.new(1, -16, 0, 35),
-        UDim2.fromOffset(8, 48 + (index - 1) * 43)
-    )
+local SelectedButton
 
-    button.MouseButton1Click:Connect(function()
-        ShowPage(item[2])
-    end)
+local function ShowPage(page, button)
+    for _, p in pairs(Pages) do
+        p.Visible = false
+    end
+
+    page.Visible = true
+
+    if SelectedButton then
+        SelectedButton.BackgroundColor3 =
+            Color3.fromRGB(22, 29, 42)
+    end
+
+    SelectedButton = button
+    button.BackgroundColor3 = C.Blue
 end
 
-ShowPage("Home")
+for i, item in ipairs(Navigation) do
+    local button = NewButton(
+        Sidebar,
+        item[1] .. "  " .. item[2],
+        UDim2.new(1, -12, 0, 39),
+        UDim2.fromOffset(6, 47 + (i - 1) * 47)
+    )
 
--- FLOATING REOPEN BUTTON
+    button.TextXAlignment = Enum.TextXAlignment.Left
 
-local Reopen = Button(
-    Screen,
-    "LP",
-    UDim2.fromOffset(48, 48),
-    UDim2.new(0, 20, 0.5, -24)
-)
+    New("UIPadding", {
+        PaddingLeft = UDim.new(0, 9)
+    }, button)
 
-Reopen.BackgroundColor3 = Config.Accent
-Reopen.Visible = false
-Corner(Reopen, 24)
+    button.MouseButton1Click:Connect(function()
+        ShowPage(item[3], button)
+    end)
+
+    item.Button = button
+end
+
+ShowPage(Home, Navigation[1].Button)
+
+QuickScripts.MouseButton1Click:Connect(function()
+    ShowPage(ScriptHub, Navigation[2].Button)
+end)
+
+QuickAssets.MouseButton1Click:Connect(function()
+    ShowPage(AssetManager, Navigation[3].Button)
+end)
 
 -- WINDOW CONTROLS
 
-Close.MouseButton1Click:Connect(function()
+local Reopen = NewButton(
+    GUI, "LP",
+    UDim2.fromOffset(52, 52),
+    UDim2.new(0, 15, 0.5, -26), C.Blue
+)
+
+Reopen.Visible = false
+Round(Reopen, 26)
+Outline(Reopen, C.Cyan, 0.1)
+
+local function HideWindow()
     Window.Visible = false
     Reopen.Visible = true
-end)
+end
 
-Minimize.MouseButton1Click:Connect(function()
-    Window.Visible = false
-    Reopen.Visible = true
-end)
-
-Reopen.MouseButton1Click:Connect(function()
+local function OpenWindow()
     Window.Visible = true
     Reopen.Visible = false
-end)
+end
 
--- DRAGGABLE WINDOW
+CloseButton.MouseButton1Click:Con
+nect(HideWindow)
+MinButton.MouseButton1Click:Connect(HideWindow)
+Reopen.MouseButton1Click:Connect(OpenWindow)
 
+-- DRAGGING
 local dragging = false
 local dragStart
-local startPosition
+local startPos
 
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -524,95 +837,72 @@ Header.InputBegan:Connect(function(input)
 
         dragging = true
         dragStart = input.Position
-        startPosition = Window.Position
+        startPos = Window.Position
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging then
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
+UIS.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        local delta = input.Position - dragStart
 
-            local delta = input.Position - dragStart
-
-            Window.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
-            )
-        end
+        Window.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
+UIS.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
     end
 end)
 
--- RESIZE HANDLE
-
-local ResizeHandle = Create("TextButton", {
-    Text = "◢",
-    TextSize = 16,
-    TextColor3 = Config.Muted,
-    BackgroundColor3 = Config.PanelColor,
-    Size = UDim2.fromOffset(23, 23),
-    Position = UDim2.new(1, -23, 1, -23),
-    ZIndex = 5
-}, Window)
-
+-- RESIZING
 local resizing = false
 local resizeStart
 local originalSize
 
-ResizeHandle.InputBegan:Connect(function(input)
+Resize.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
 
         resizing = true
         resizeStart = input.Position
-        originalSize = Window.Size
+        originalSize = Window.AbsoluteSize
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if resizing then
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
+UIS.InputChanged:Connect(function(input)
+    if resizing and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        local delta = input.Position - resizeStart
 
-            local delta = input.Position - resizeStart
-
-            Window.Size = UDim2.fromOffset(
-                math.max(350, originalSize.X.Offset + delta.X),
-                math.max(260, originalSize.Y.Offset + delta.Y)
-            )
-        end
+        Window.Size = UDim2.fromOffset(
+            math.clamp(originalSize.X + delta.X, 320, 900),
+            math.clamp(originalSize.Y + delta.Y, 380, 700)
+        )
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
+UIS.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
         resizing = false
     end
 end)
 
--- INITIALIZE
-
-task.wait(1.6)
-
-Window.Visible = true
-
-TweenService:Create(
-    Loading,
-    TweenInfo.new(0.4),
-    {BackgroundTransparency = 1}
-):Play()
-
-task.wait(0.4)
-Loading:Destroy()
-
-print("[LA PEACE HUB] Initialized successfully.")
+-- INITIALIZATION
+print("================================")
+print("LA PEACE HUB v0.2.0")
+print("Created by Kai")
+print("Interface initialized!")
+print("================================")
